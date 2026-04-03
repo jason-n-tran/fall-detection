@@ -7,8 +7,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+find_package(Qt6 COMPONENTS Quick Core Gui REQUIRED)
+
 add_executable(FallDetector
     main.cpp
+    resources.qrc
 )
 
-target_link_libraries(FallDetector PRIVATE)
+target_link_libraries(FallDetector PRIVATE Qt6::Core Qt6::Gui Qt6::Quick)
