@@ -11,6 +11,8 @@ find_package(Qt6 COMPONENTS Quick Core Gui REQUIRED)
 
 add_executable(FallDetector
     main.cpp
+    imusensor.cpp
+    imusensor.h
     resources.qrc
 )
 
