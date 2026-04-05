@@ -13,6 +13,9 @@ add_executable(FallDetector
     main.cpp
     imusensor.cpp
     imusensor.h
+    matrix.h
+    orientation_filter.h
+    circular_buffer.h
     resources.qrc
 )
 
