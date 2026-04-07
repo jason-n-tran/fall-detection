@@ -118,6 +118,15 @@ void ImuSensor::processSensorLoop() {
 
             detectFall(cur);
 
+            m_gaitWindow.push_back(cur.total_accel);
+            if (m_gaitWindow.size() >= 128) {
+                double risk = m_gaitAnalyzer.analyzeGait(m_gaitWindow, SAMPLE_RATE_HZ);
+                if (risk > 0.6) {
+                    emit fallRiskWarning(risk);
+                }
+                m_gaitWindow.clear();
+            }
+
             m_history.push(cur);
         }
 

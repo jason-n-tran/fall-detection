@@ -7,6 +7,7 @@
 #include <atomic>
 #include "orientation_filter.h"
 #include "circular_buffer.h"
+#include "gait_analyzer.h"
 
 struct SensorData {
     double ax, ay, az;
@@ -30,6 +31,7 @@ public slots:
 
 signals:
     void fallDetected();
+    void fallRiskWarning(double riskScore);
     void statusUpdated(const QString &status);
 
 private slots:
@@ -43,6 +45,9 @@ private:
     OrientationFilter m_rollFilter;
     OrientationFilter m_pitchFilter;
     CircularBuffer<SensorData> m_history;
+    GaitAnalyzer m_gaitAnalyzer;
+    std::vector<double> m_gaitWindow;
+    int m_analysisCounter = 0;
 
     double m_vertical_vel = 0.0;
     bool m_potentialFall = false;

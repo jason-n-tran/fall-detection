@@ -16,6 +16,7 @@ add_executable(FallDetector
     matrix.h
     orientation_filter.h
     circular_buffer.h
+    gait_analyzer.h
     resources.qrc
 )
 
