@@ -55,9 +55,68 @@ Window {
         ColorAnimation { to: "#0f172a"; duration: 800 }
     }
 
+    Item {
+        id: visualizationContainer
+        width: 300
+        height: 300
+        anchors.top: parent.top
+        anchors.topMargin: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+
+        Rectangle {
+            id: deviceModel
+            width: 120
+            height: 200
+            color: "#1e293b"
+            radius: 10
+            border.color: imuSensor.totalAccel > 1.5 ? "#f43f5e" : accentColor
+            border.width: 2
+            anchors.centerIn: parent
+            
+            Rectangle {
+                width: 40; height: 10
+                color: accentColor
+                anchors.top: parent.top
+                anchors.topMargin: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                radius: 5
+                opacity: 0.8
+            }
+
+            transform: [
+                Rotation { 
+                    origin.x: deviceModel.width / 2
+                    origin.y: deviceModel.height / 2
+                    axis { x: 1; y: 0; z: 0 } 
+                    angle: imuSensor.pitch * (180 / Math.PI)
+                    Behavior on angle { NumberAnimation { duration: 20 } }
+                },
+                Rotation { 
+                    origin.x: deviceModel.width / 2
+                    origin.y: deviceModel.height / 2
+                    axis { x: 0; y: 1; z: 0 } 
+                    angle: imuSensor.roll * (180 / Math.PI)
+                    Behavior on angle { NumberAnimation { duration: 20 } }
+                }
+            ]
+
+            Rectangle {
+                anchors.fill: parent
+                color: "transparent"
+                border.color: deviceModel.border.color
+                border.width: 1
+                opacity: 0.3
+                radius: parent.radius
+                scale: 1.05
+            }
+        }
+    }
+
     Column {
-        anchors.centerIn: parent
-        spacing: 20
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 100
+        anchors.horizontalCenter: parent.horizontalCenter
+        spacing: 15
         
         Text {
             id: fallIcon
@@ -84,13 +143,41 @@ Window {
 
         Text {
             id: statusText
-            font.pixelSize: 32
+            font.pixelSize: 28
             color: "white"
             text: qsTr("Monitoring...")
             anchors.horizontalCenter: parent.horizontalCenter
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
             width: root.width * 0.8
+        }
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 10
+            
+            Rectangle {
+                width: 200
+                height: 8
+                color: "#1e293b"
+                radius: 4
+                
+                Rectangle {
+                    width: Math.min(200, (imuSensor.totalAccel / 4.0) * 200)
+                    height: parent.height
+                    color: imuSensor.totalAccel > 2.0 ? "#ef4444" : "#10b981"
+                    radius: 4
+                    Behavior on width { NumberAnimation { duration: 50 } }
+                }
+            }
+            
+            Text {
+                text: imuSensor.totalAccel.toFixed(2) + " G"
+                color: "white"
+                font.pixelSize: 12
+                font.family: "Monospace"
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
 
         Rectangle {

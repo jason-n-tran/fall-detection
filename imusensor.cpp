@@ -120,11 +120,22 @@ void ImuSensor::processSensorLoop() {
 
             m_gaitWindow.push_back(cur.total_accel);
             if (m_gaitWindow.size() >= 128) {
-                double risk = m_gaitAnalyzer.analyzeGait(m_gaitWindow, SAMPLE_RATE_HZ);
-                if (risk > 0.6) {
-                    emit fallRiskWarning(risk);
+                m_riskScore = m_gaitAnalyzer.analyzeGait(m_gaitWindow, SAMPLE_RATE_HZ);
+                emit riskScoreChanged();
+
+                if (m_riskScore > 0.6) {
+                    emit fallRiskWarning(m_riskScore);
                 }
                 m_gaitWindow.clear();
+            }
+
+            if (m_analysisCounter++ % 2 == 0) {
+                m_pitch = cur.pitch;
+                m_roll = cur.roll;
+                m_totalAccel = cur.total_accel;
+                emit pitchChanged();
+                emit rollChanged();
+                emit sensorUpdated();
             }
 
             m_history.push(cur);
