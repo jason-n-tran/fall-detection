@@ -70,6 +70,13 @@ void ImuSensor::stopSensing() {
     }
 }
 
+void ImuSensor::resetAlert() {
+    m_potentialFall = false;
+    m_freefallSamples = 0;
+    m_vertical_vel = 0;
+    emit statusUpdated("Monitoring...");
+}
+
 void ImuSensor::processSensorLoop() {
     while (m_running) {
         auto start = std::chrono::steady_clock::now();
@@ -90,9 +97,9 @@ void ImuSensor::processSensorLoop() {
             cur.gx = gx_raw * 0.070 * (M_PI / 180.0); // rad/s
             cur.gy = gy_raw * 0.070 * (M_PI / 180.0);
             cur.gz = gz_raw * 0.070 * (M_PI / 180.0);
-            cur.ax = ax_raw * 0.000122; // G
-            cur.ay = ay_raw * 0.000122;
-            cur.az = az_raw * 0.000122;
+            cur.ax = ax_raw * 0.000244; 
+            cur.ay = ay_raw * 0.000244;
+            cur.az = az_raw * 0.000244;
             cur.total_accel = sqrt(cur.ax*cur.ax + cur.ay*cur.ay + cur.az*cur.az);
 
             double accel_roll = atan2(cur.ay, cur.az);
@@ -132,9 +139,11 @@ void ImuSensor::processSensorLoop() {
             if (m_analysisCounter++ % 2 == 0) {
                 m_pitch = cur.pitch;
                 m_roll = cur.roll;
+                m_yaw += cur.gz * (DT * 2.0);
                 m_totalAccel = cur.total_accel;
                 emit pitchChanged();
                 emit rollChanged();
+                emit yawChanged();
                 emit sensorUpdated();
             }
 
@@ -149,11 +158,16 @@ void ImuSensor::processSensorLoop() {
 }
 
 void ImuSensor::detectFall(const SensorData &cur) {
-    if (cur.total_accel < 0.4) {
-        m_potentialFall = true;
+    if (cur.total_accel < 0.5) {
+        m_freefallSamples++;
+    } else {
+         if (m_freefallSamples > 5) {
+            m_potentialFall = true;
+        }
+        m_freefallSamples = 0; 
     }
 
-    if (m_potentialFall && cur.total_accel > 3.0) {
+    if (m_potentialFall && cur.total_accel > 2.8) {
         if (m_history.count() < 50) {
             m_potentialFall = false;
             return;
@@ -161,21 +175,27 @@ void ImuSensor::detectFall(const SensorData &cur) {
 
         SensorData past = m_history.get_past(49);
         
-        bool high_downward_vel = (cur.vertical_vel < -1.5);
-        
-        double angle_change = sqrt(pow(cur.roll - past.roll, 2) + pow(cur.pitch - past.pitch, 2));
-        bool posture_change = (std::abs(cur.pitch) > M_PI/3.0 || std::abs(cur.roll) > M_PI/3.0);
+        double d_pitch = cur.pitch - past.pitch;
+        double d_roll = cur.roll - past.roll;
+        double angle_change = sqrt(d_pitch * d_pitch + d_roll * d_roll);
+        bool high_velocity = (cur.vertical_vel < -1.0); 
+        bool moderate_velocity = (cur.vertical_vel < -0.6);
 
-        if (posture_change && high_downward_vel) {
+        if (angle_change > (M_PI / 4.0) && high_velocity) {
             emit fallDetected();
             emit statusUpdated("HARD FALL DETECTED!");
-        } else if (posture_change) {
-            emit statusUpdated("Stumble / Sit down detected");
-        } else {
-            emit statusUpdated("Impact detected, still upright");
+        } 
+        else if (moderate_velocity) {
+            emit statusUpdated("Sitting Down / Safe Descent");
+        }
+        else if (angle_change > (M_PI / 6.0)) {
+            emit statusUpdated("Posture Shift / Recovery");
+        }
+        else {
+            emit statusUpdated("Impact detected (Unchanged posture)");
         }
         
         m_potentialFall = false;
-        m_vertical_vel = 0;
+        m_vertical_vel *= 0.1;
     }
 }

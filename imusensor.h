@@ -23,6 +23,7 @@ class ImuSensor : public QObject
     Q_OBJECT
     Q_PROPERTY(double pitch READ pitch NOTIFY pitchChanged)
     Q_PROPERTY(double roll READ roll NOTIFY rollChanged)
+    Q_PROPERTY(double yaw READ yaw NOTIFY yawChanged)
     Q_PROPERTY(double totalAccel READ totalAccel NOTIFY sensorUpdated)
     Q_PROPERTY(double riskScore READ riskScore NOTIFY riskScoreChanged)
 
@@ -32,12 +33,14 @@ public:
 
     double pitch() const { return m_pitch; }
     double roll() const { return m_roll; }
+    double yaw() const { return m_yaw; }
     double totalAccel() const { return m_totalAccel; }
     double riskScore() const { return m_riskScore; }
 
 public slots:
     void startSensing();
     void stopSensing();
+    void resetAlert();
 
 signals:
     void fallDetected();
@@ -45,6 +48,7 @@ signals:
     void statusUpdated(const QString &status);
     void pitchChanged();
     void rollChanged();
+    void yawChanged();
     void riskScoreChanged();
     void sensorUpdated();
 
@@ -65,9 +69,13 @@ private:
 
     double m_pitch = 0.0;
     double m_roll = 0.0;
+    double m_yaw = 0.0;
     double m_totalAccel = 1.0;
     double m_riskScore = 0.0;
     double m_vertical_vel = 0.0;
+    
+    int m_freefallSamples = 0;
+    long long m_lastImpactTime = 0;
     bool m_potentialFall = false;
     
     const double G = 9.80665;

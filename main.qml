@@ -24,7 +24,9 @@ Window {
         target: imuSensor
 
         function onStatusUpdated(status) {
-            statusText.text = status;
+            if (isSafe) {
+                statusText.text = status;
+            }
         }
 
         function onFallDetected() {
@@ -36,9 +38,11 @@ Window {
         }
 
         function onFallRiskWarning(risk) {
-            riskAnim.start();
-            riskWarningLabel.visible = true;
-            riskResetTimer.restart();
+            if (isSafe) {
+                riskAnim.start();
+                riskWarningLabel.visible = true;
+                riskResetTimer.restart();
+            }
         }
     }
 
@@ -51,6 +55,7 @@ Window {
     SequentialAnimation on color {
         id: riskAnim
         running: false
+        onStarted: if (!isSafe) riskAnim.stop(); 
         ColorAnimation { to: "#422006"; duration: 200 }
         ColorAnimation { to: "#0f172a"; duration: 800 }
     }
@@ -96,6 +101,13 @@ Window {
                     origin.y: deviceModel.height / 2
                     axis { x: 0; y: 1; z: 0 } 
                     angle: imuSensor.roll * (180 / Math.PI)
+                    Behavior on angle { NumberAnimation { duration: 20 } }
+                },
+                Rotation { 
+                    origin.x: deviceModel.width / 2
+                    origin.y: deviceModel.height / 2
+                    axis { x: 0; y: 0; z: 1 } 
+                    angle: imuSensor.yaw * (180 / Math.PI)
                     Behavior on angle { NumberAnimation { duration: 20 } }
                 }
             ]
